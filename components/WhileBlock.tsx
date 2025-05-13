@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 
-interface IfBlockProps {
+interface WhileBlockProps {
   condition: string
   operator: string
   onConditionChange: (condition: string) => void
@@ -12,7 +12,7 @@ interface IfBlockProps {
   rightInputConnected?: boolean
 }
 
-export function IfBlock({
+export function WhileBlock({
   condition,
   operator,
   onConditionChange,
@@ -21,7 +21,7 @@ export function IfBlock({
   blockId,
   leftInputConnected = false,
   rightInputConnected = false,
-}: IfBlockProps) {
+}: WhileBlockProps) {
   const [leftValue, setLeftValue] = useState(condition.split(" ")[0] || "")
   const [selectedOperator, setSelectedOperator] = useState(operator)
   const [rightValue, setRightValue] = useState(condition.split(" ")[2] || "")
@@ -83,7 +83,7 @@ export function IfBlock({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Условие (if)</Text>
+        <Text style={styles.title}>Цикл (while)</Text>
       </View>
       <View style={styles.content}>
         <View style={styles.row}>
@@ -157,10 +157,10 @@ export function IfBlock({
 
         <View style={styles.pathsContainer}>
           <View style={styles.pathIndicator}>
-            <Text style={styles.pathText}>True</Text>
+            <Text style={styles.pathText}>Тело цикла</Text>
           </View>
           <View style={styles.pathIndicator}>
-            <Text style={styles.pathText}>False</Text>
+            <Text style={styles.pathText}>Выход</Text>
           </View>
         </View>
       </View>
@@ -170,7 +170,7 @@ export function IfBlock({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#9C27B0",
+    backgroundColor: "#FF5722",
     borderRadius: 8,
     marginBottom: 12,
     overflow: "visible",

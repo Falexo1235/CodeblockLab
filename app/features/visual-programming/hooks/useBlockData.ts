@@ -3,6 +3,22 @@ import { BlockType } from '../types';
 export const useBlockData = () => {
   const blocks: BlockType[] = [
     {
+      id: 'start-block',
+      category: 'Управление',
+      title: 'Старт',
+      description: 'Начало программы',
+      color: '#4CAF50',
+      type: 'start',
+    },
+    {
+      id: 'end-block',
+      category: 'Управление',
+      title: 'Конец',
+      description: 'Конец программы',
+      color: '#F44336',
+      type: 'end',
+    },
+    {
       id: 'var-create',
       category: 'Переменные',
       title: 'Создать переменную',
@@ -21,9 +37,9 @@ export const useBlockData = () => {
     {
       id: 'arithmetic',
       category: 'Операторы',
-      title: 'Арифметическая операция',
-      description: 'Выполняет арифметическую операцию над двумя значениями',
-      color: '#59C059',
+      title: 'Арифметическое выражение',
+      description: 'Вычисляет арифметическое выражение с переменными и числами',
+      color: '#FF9800',
       type: 'arithmetic',
     },
     {
@@ -34,7 +50,15 @@ export const useBlockData = () => {
       color: '#FFAB19',
       type: 'if',
     },
-  ];
+    {
+      id: 'while-loop',
+      category: 'Управление',
+      title: 'Цикл while',
+      description: 'Повторяет блок кода, пока условие истинно',
+      color: '#FF5722',
+      type: 'while',
+    },
+  ]
 
   return { blocks };
 }; 

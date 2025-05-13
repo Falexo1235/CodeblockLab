@@ -1,11 +1,11 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { styles } from '../styles';
 import { BlockType } from '../types';
@@ -14,32 +14,48 @@ interface DraggableBlockProps {
   block: BlockType;
   onDrop: (block: BlockType, x: number, y: number) => void;
   workspaceLayout: { x: number, y: number, width: number, height: number };
+  workspaceRef: React.RefObject<View | null>;
 }
 
 export const DraggableBlock = ({ 
   block, 
   onDrop,
   workspaceLayout,
+  workspaceRef
 }: DraggableBlockProps) => {
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-  
+
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.oldState === State.ACTIVE) {
       const { absoluteX, absoluteY } = event.nativeEvent;
-      
+
       if (
         absoluteX > workspaceLayout.x && 
         absoluteX < workspaceLayout.x + workspaceLayout.width &&
         absoluteY > workspaceLayout.y && 
         absoluteY < workspaceLayout.y + workspaceLayout.height
       ) {
-        const dropX = absoluteX - workspaceLayout.x;
-        const dropY = absoluteY - workspaceLayout.y;
-        
-        onDrop(block, dropX, dropY);
+
+        if (workspaceRef.current) {
+          workspaceRef.current.measure((fx, fy, width, height, px, py) => {
+
+            const dropX = absoluteX - px;
+            const dropY = absoluteY - py;
+
+            const centeredX = Math.max(0, dropX - 150) 
+            const centeredY = Math.max(0, dropY - 40) 
+
+            onDrop(block, centeredX, centeredY)
+          })
+        } else {
+
+          const dropX = absoluteX - workspaceLayout.x
+          const dropY = absoluteY - workspaceLayout.y
+          onDrop(block, dropX, dropY)
+        }
       }
       
       offsetX.value = withSpring(0);

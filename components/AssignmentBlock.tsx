@@ -7,9 +7,19 @@ interface AssignmentBlockProps {
   onVariableChange: (variable: string) => void
   onValueChange: (value: string) => void
   variables: string[]
+  blockId: string
+  valueInputConnected?: boolean
 }
 
-export function AssignmentBlock({ variable, value, onVariableChange, onValueChange, variables }: AssignmentBlockProps) {
+export function AssignmentBlock({
+  variable,
+  value,
+  onVariableChange,
+  onValueChange,
+  variables,
+  blockId,
+  valueInputConnected = false,
+}: AssignmentBlockProps) {
   const [variableName, setVariableName] = useState(variable)
   const [assignValue, setAssignValue] = useState(value)
   const [showVariables, setShowVariables] = useState(false)
@@ -70,11 +80,12 @@ export function AssignmentBlock({ variable, value, onVariableChange, onValueChan
         <View style={styles.row}>
           <Text style={styles.label}>Значение:</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, valueInputConnected && styles.disabledInput]}
             value={assignValue}
             onChangeText={handleValueChange}
             placeholder="Введите значение"
             keyboardType="numeric"
+            editable={!valueInputConnected}
           />
         </View>
       </View>
@@ -119,6 +130,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 8,
     marginLeft: 8,
+  },
+  disabledInput: {
+    backgroundColor: "#E0E0E0",
+    color: "#666",
   },
   variableSelector: {
     flex: 1,

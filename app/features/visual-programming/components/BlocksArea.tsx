@@ -9,6 +9,7 @@ interface BlocksAreaProps {
   blocks: BlockType[];
   onBlockDrop: (block: BlockType, x: number, y: number) => void;
   workspaceLayout: { x: number, y: number, width: number, height: number };
+  workspaceRef: React.RefObject<View | null>;
 }
 
 export const BlocksArea = ({ 
@@ -16,6 +17,7 @@ export const BlocksArea = ({
   blocks, 
   onBlockDrop,
   workspaceLayout,
+  workspaceRef,
 }: BlocksAreaProps) => {
   const filteredBlocks = blocks.filter(block => block.category === selectedCategory);
   
@@ -29,6 +31,7 @@ export const BlocksArea = ({
             block={block} 
             onDrop={onBlockDrop}
             workspaceLayout={workspaceLayout}
+            workspaceRef={workspaceRef}
           />
         ))}
       </ScrollView>

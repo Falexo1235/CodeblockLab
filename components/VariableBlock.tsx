@@ -32,7 +32,7 @@ export function VariableBlock({ name, onNameChange }: VariableBlockProps) {
             style={styles.input}
             value={variableName}
             onChangeText={handleNameChange}
-            placeholder="Введите имя"
+            placeholder="Введите имена переменных"
           />
         </View>
       </View>
@@ -74,5 +74,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 8,
     marginLeft: 8,
+  },
+  hint: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 12,
+    fontStyle: "italic",
+    marginLeft: 80,
   },
 })
