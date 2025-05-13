@@ -1,8 +1,7 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { styles } from '../styles';
 import { PlacedBlockType } from '../types';
-import { PlacedBlock } from './PlacedBlock';
 
 interface WorkspaceProps {
   placedBlocks: PlacedBlockType[];
@@ -10,6 +9,7 @@ interface WorkspaceProps {
   onUpdateBlockPosition: (instanceId: string, x: number, y: number) => void;
   workspaceRef: React.RefObject<View | null>;
   onWorkspaceLayout: (event: any) => void;
+  children?: React.ReactNode
 }
 
 export const Workspace = ({ 
@@ -18,6 +18,7 @@ export const Workspace = ({
   onUpdateBlockPosition,
   workspaceRef,
   onWorkspaceLayout,
+  children,
 }: WorkspaceProps) => {
   return (
     <View 
@@ -36,15 +37,14 @@ export const Workspace = ({
           </TouchableOpacity>
         )}
       </View>
+      <ScrollView style={styles.workspaceScrollView} contentContainerStyle={styles.workspaceScrollContent}>
       <View style={styles.workspace}>
-        {placedBlocks.map(block => (
-          <PlacedBlock 
-            key={block.instanceId} 
-            block={block} 
-            onUpdatePosition={onUpdateBlockPosition}
-          />
-        ))}
+        {children}
+        {placedBlocks.length === 0 && (
+          <Text style={styles.emptyWorkspaceText}>Перетащите блоки сюда, чтобы создать программу</Text>
+        )}
       </View>
+      </ScrollView>
     </View>
   );
 }; 
