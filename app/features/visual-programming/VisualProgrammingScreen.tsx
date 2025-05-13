@@ -445,7 +445,7 @@ const VisualProgrammingScreen = () => {
 
     const startBlock = placedBlocks.find((block) => block.type === 'start')
     if (!startBlock) {
-      Alert.alert('Ошибка', 'Программа должна начинаться с блока 'Старт'')
+      Alert.alert('Ошибка', 'Программа должна начинаться с блока "Старт"')
       return
     }
 
