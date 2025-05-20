@@ -314,43 +314,115 @@ export class Interpreter {
     }
 
     try {
+        let processedExpression = expression
+        for (const [name, value] of this.variables.entries()) {
+            const regex = new RegExp(`\\b${name}\\b`, "g")
+            processedExpression = processedExpression.replace(regex, value.toString())
+        }
+        if (!/^[\d\s+\-*/^().]+$/.test(processedExpression)) {
+            this.errors.push({
+                blockId: block.instanceId,
+                message: "Выражение содержит недопустимые символы",
+            });
+            return { value: 0, error: "Недопустимые символы" }
+        }
+        const tokens = this.tokenize(processedExpression)
+        const rpn = this.infixToRPN(tokens)
+        const result = this.calculateRPN(rpn)
 
-      let processedExpression = expression
-      for (const [name, value] of this.variables.entries()) {
-        const regex = new RegExp(`\\b${name}\\b`, "g")
-        processedExpression = processedExpression.replace(regex, value.toString())
-      }
-
-      if (!/^[\d\s+\-*/$$$$.%^()]+$/.test(processedExpression)) {
-
-        this.errors.push({
-          blockId: block.instanceId,
-          message: "Выражение содержит недопустимые символы",
-        })
-        return { value: 0, error: "Выражение содержит недопустимые символы" }
-      }
-
-      processedExpression = processedExpression.replace(/\^/g, "**")
-
-      const result = eval(processedExpression)
-
-      if (typeof result !== "number" || isNaN(result) || !isFinite(result)) {
-
-        this.errors.push({
-          blockId: block.instanceId,
-          message: "Результат не является числом",
-        })
-        return { value: 0, error: "Результат не является числом" }
-      }
-
-      return { value: result }
+        if (isNaN(result) || !isFinite(result)) {
+            this.errors.push({
+                blockId: block.instanceId,
+                message: "Некорректный результат вычислений",
+            });
+            return { value: 0, error: "Некорректный результат" }
+        }
+        return { value: result }
+        
     } catch (error) {
-
-      this.errors.push({
-        blockId: block.instanceId,
-        message: `Ошибка вычисления: ${error.message}`,
-      })
-      return { value: 0, error: `Ошибка вычисления: ${error.message}` }
+        this.errors.push({
+            blockId: block.instanceId,
+            message: `Ошибка вычисления: ${error.message}`,
+        });
+        return { value: 0, error: error.message }
     }
+  }
+
+  private tokenize(expression: string): string[] {
+    const regex = /(\d+\.?\d*)|([+\-*/^()])/g
+    const tokens = []
+    let match
+
+    while ((match = regex.exec(expression)) !== null) {
+        if (match[1]) tokens.push(match[1])
+        else if (match[2]) tokens.push(match[2])
+    }
+
+    return tokens
+  }
+
+  private infixToRPN(tokens: string[]): string[] {
+    const output: string[] = []
+    const stack: string[] = []
+    const precedence: { [key: string]: number } = {
+        '^': 4,
+        '*': 3,
+        '/': 3,
+        '+': 2,
+        '-': 2,
+    };
+
+    for (const token of tokens) {
+        if (/\d/.test(token)) {
+            output.push(token)
+        } else if (token === '(') {
+            stack.push(token)
+        } else if (token === ')') {
+            while (stack.length && stack[stack.length - 1] !== '(') {
+                output.push(stack.pop()!)
+            }
+            stack.pop()
+        } else {
+            while (
+                stack.length &&
+                stack[stack.length - 1] !== '(' &&
+                precedence[token] <= precedence[stack[stack.length - 1]]
+            ) {
+                output.push(stack.pop()!)
+            }
+            stack.push(token)
+        }
+    }
+
+    while (stack.length) {
+        output.push(stack.pop()!)
+    }
+
+    return output
+  }
+
+  private calculateRPN(rpn: string[]): number {
+    const stack: number[] = []
+
+    for (const token of rpn) {
+        if (/\d/.test(token)) {
+            stack.push(parseFloat(token))
+        } else {
+            const b = stack.pop()!
+            const a = stack.pop()!
+            switch (token) {
+                case '+': stack.push(a + b); break;
+                case '-': stack.push(a - b); break;
+                case '*': stack.push(a * b); break;
+                case '/': 
+                    if (b === 0) throw new Error("Деление на ноль");
+                    stack.push(a / b); 
+                    break;
+                case '^': stack.push(a ** b); break;
+                default: throw new Error(`Неизвестный оператор: ${token}`);
+            }
+        }
+    }
+    return stack.pop()!
   }
 }
