@@ -10,6 +10,8 @@ interface BlocksAreaProps {
   onBlockDrop: (block: BlockType, x: number, y: number) => void;
   workspaceLayout: { x: number, y: number, width: number, height: number };
   workspaceRef: React.RefObject<View | null>;
+  isPortrait: boolean;
+  onBlockPress?: (block: BlockType) => void;
 }
 
 export const BlocksArea = ({ 
@@ -18,6 +20,8 @@ export const BlocksArea = ({
   onBlockDrop,
   workspaceLayout,
   workspaceRef,
+  isPortrait,
+  onBlockPress,
 }: BlocksAreaProps) => {
   const filteredBlocks = blocks.filter(block => block.category === selectedCategory);
   
@@ -32,6 +36,8 @@ export const BlocksArea = ({
             onDrop={onBlockDrop}
             workspaceLayout={workspaceLayout}
             workspaceRef={workspaceRef}
+            isPortrait={isPortrait}
+            onBlockPress={onBlockPress}
           />
         ))}
       </ScrollView>

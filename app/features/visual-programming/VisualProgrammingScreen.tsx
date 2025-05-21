@@ -86,6 +86,16 @@ const VisualProgrammingScreen = () => {
     setPlacedBlocks(prev => [...prev, newBlock]);
   };
   
+  const handleBlockPress = (block: BlockType) => {
+    const centerX = workspaceLayout.width / 2 - 150
+    const centerY = workspaceLayout.height / 2 - 60
+
+    const offsetX = (placedBlocks.length % 3) * 30
+    const offsetY = (placedBlocks.length % 5) * 30
+
+    addBlockToWorkspace(block, centerX + offsetX, centerY + offsetY)
+  }
+
   const updateBlockPosition = (instanceId: string, x: number, y: number) => {
     setPlacedBlocks(prev => 
       prev.map(b => 
@@ -536,6 +546,8 @@ const VisualProgrammingScreen = () => {
                   onBlockDrop={addBlockToWorkspace}
                   workspaceLayout={workspaceLayout}
                   workspaceRef={workspaceRef}
+                  isPortrait={isPortrait}
+                  onBlockPress={handleBlockPress}
                 />
               )}
 
@@ -581,6 +593,8 @@ const VisualProgrammingScreen = () => {
                 onBlockDrop={addBlockToWorkspace}
                 workspaceLayout={workspaceLayout}
                 workspaceRef={workspaceRef}
+                isPortrait={isPortrait}
+                onBlockPress={handleBlockPress}
               />
 
               <View style={styles.workspaceContainer}>

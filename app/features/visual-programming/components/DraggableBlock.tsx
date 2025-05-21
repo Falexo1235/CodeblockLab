@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -15,13 +15,17 @@ interface DraggableBlockProps {
   onDrop: (block: BlockType, x: number, y: number) => void;
   workspaceLayout: { x: number, y: number, width: number, height: number };
   workspaceRef: React.RefObject<View | null>;
+  isPortrait: boolean;
+  onBlockPress?: (block: BlockType) => void;
 }
 
 export const DraggableBlock = ({ 
   block, 
   onDrop,
   workspaceLayout,
-  workspaceRef
+  workspaceRef,
+  isPortrait,
+  onBlockPress
 }: DraggableBlockProps) => {
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
@@ -84,6 +88,25 @@ export const DraggableBlock = ({
     };
   });
   
+  const handlePress = () => {
+    if (isPortrait && onBlockPress) {
+      onBlockPress(block)
+    }
+  }
+
+  if (isPortrait) {
+    return (
+      <TouchableOpacity
+        style={[styles.blockContainer, { backgroundColor: block.color }]}
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.blockTitle}>{block.title}</Text>
+        <Text style={styles.blockDescription}>{block.description}</Text>
+      </TouchableOpacity>
+    )
+  }
+
   return (
     <PanGestureHandler
       onGestureEvent={onGestureEvent}

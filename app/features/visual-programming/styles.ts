@@ -145,6 +145,18 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
   },
+  blockContainerMobile: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
   blockTitle: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -185,8 +197,8 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   workspaceScrollContent: {
-    minWidth: '100%',
-    minHeight: 1000,
+    minWidth: 4000,
+    minHeight: 4000,
   },
   workspace: {
     flex: 1,
@@ -196,8 +208,8 @@ export const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderStyle: 'dashed',
     position: 'relative',
-    minHeight: 1000,
-    width: '100%',
+    minHeight: 4000,
+    width: 4000,
   },
   workspaceBlockContainer: {
     width: 300,

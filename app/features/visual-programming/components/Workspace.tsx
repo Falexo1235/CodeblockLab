@@ -167,11 +167,13 @@ export const Workspace = ({
           </TouchableOpacity>
         )}
       </View>
+      <ScrollView>
       <ScrollView
         style={styles.workspaceScrollView}
         contentContainerStyle={styles.workspaceScrollContent}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
+        horizontal={true}
       >
         <View style={styles.workspace}>
           {renderConnectionLines()}
@@ -180,6 +182,7 @@ export const Workspace = ({
             <Text style={styles.emptyWorkspaceText}>Перетащите блоки сюда, чтобы создать программу</Text>
           )}
         </View>
+      </ScrollView>
       </ScrollView>
     </View>
   );
