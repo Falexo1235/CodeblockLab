@@ -1,5 +1,6 @@
-import { StyleSheet, TouchableOpacity, View } from "react-native"
-import type { ConnectionPoint } from "../app/features/visual-programming/types"
+import React from 'react';
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import type { ConnectionPoint } from "../app/features/visual-programming/types";
 
 interface ConnectionPointsProps {
   blockType: string
@@ -59,6 +60,8 @@ export function ConnectionPoints({
   const isEndBlock = blockType === "end"
   const isArithmeticBlock = blockType === "arithmetic"
   const isAssignmentBlock = blockType === "assignment"
+  const isForBlock = blockType === "for"
+  const isOutputBlock = blockType === "output"
 
   const isActivePoint = (
     type: "top" | "bottom" | "true" | "false" | "output" | "valueInput" | "leftInput" | "rightInput",
@@ -84,7 +87,7 @@ export function ConnectionPoints({
         />
       )}
 
-      {!isEndBlock && !isIfBlock && !isWhileBlock && !isArithmeticBlock && (
+      {!isEndBlock && !isIfBlock && !isWhileBlock && !isForBlock && !isArithmeticBlock && !isOutputBlock && (
         <TouchableOpacity
           style={[
             styles.bottomPoint,
@@ -95,7 +98,7 @@ export function ConnectionPoints({
         />
       )}
 
-      {(isIfBlock || isWhileBlock) && (
+      {(isIfBlock || isWhileBlock || isForBlock) && (
         <>
           <TouchableOpacity
             style={[
@@ -140,15 +143,38 @@ export function ConnectionPoints({
         />
       )}
 
+      {isOutputBlock && (
+        <>
+          <TouchableOpacity
+            style={[
+              styles.bottomPoint,
+              isActivePoint("bottom") && styles.activePoint,
+              hasBottomConnection && styles.connectedPoint,
+            ]}
+            onPress={() => handlePress("bottom")}
+          />
+          <TouchableOpacity
+            style={[
+              styles.valueInputPoint,
+              styles.outputValueInputPoint,
+              isActivePoint("valueInput") && styles.activePoint,
+              valueInputConnected && styles.connectedInputPoint,
+            ]}
+            onPress={() => handlePress("valueInput", "value")}
+          />
+        </>
+      )}
+
+      {}
       {isAssignmentBlock && (
-        <TouchableOpacity
-          style={[
-            styles.valueInputPoint,
-            isActivePoint("valueInput") && styles.activePoint,
-            valueInputConnected && styles.connectedInputPoint,
-          ]}
-          onPress={() => handlePress("valueInput", "value")}
-        />
+         <TouchableOpacity
+            style={[
+              styles.valueInputPoint, 
+              isActivePoint("valueInput") && styles.activePoint,
+              valueInputConnected && styles.connectedInputPoint,
+            ]}
+            onPress={() => handlePress("valueInput", "value")}
+          />
       )}
     </View>
   )
@@ -242,6 +268,12 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: "rgba(0, 0, 255, 0.3)",
     borderRadius: 5,
+  },
+  outputValueInputPoint: {
+    left: -10,
+    right: 'auto',
+    top: "50%",
+    marginTop: -10,
   },
   activePoint: {
     backgroundColor: "rgba(0, 0, 255, 0.5)",
