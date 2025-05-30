@@ -93,4 +93,6 @@ export const CategorySidebar = ({
       ))}
     </View>
   );
-}; 
+};
+
+export default CategorySidebar; 

@@ -43,4 +43,6 @@ export const BlocksArea = ({
       </ScrollView>
     </View>
   );
-}; 
+};
+
+export default BlocksArea; 
