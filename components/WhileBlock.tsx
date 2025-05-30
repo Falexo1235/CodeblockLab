@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+const isPhone =( Platform.OS === "android" || Platform.OS === "ios")
 
 interface WhileBlockProps {
   condition: string
@@ -118,7 +119,7 @@ export function WhileBlock({
             </TouchableOpacity>
             {showOperators && (
               <View style={styles.operatorsDropdown}>
-                <ScrollView style={{ maxHeight: 150 }}>
+                <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                   {operators.map((op) => (
                     <TouchableOpacity key={op} style={styles.operatorOption} onPress={() => handleOperatorChange(op)}>
                       <Text>{op}</Text>
@@ -139,7 +140,7 @@ export function WhileBlock({
             />
             {showRightVariables && variables.length > 0 && !rightInputConnected && (
               <View style={styles.variablesDropdown}>
-                <ScrollView style={{ maxHeight: 150 }}>
+                <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                   {variables.map((name) => (
                     <TouchableOpacity
                       key={name}
@@ -253,6 +254,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     zIndex: 100,
+    maxHeight: isPhone ? undefined : 150
+
   },
   variableOption: {
     padding: 8,

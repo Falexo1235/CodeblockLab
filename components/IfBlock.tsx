@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
-
+import { Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+const isPhone =( Platform.OS === "android" || Platform.OS === "ios")
 interface IfBlockProps {
   condition: string
   operator: string
@@ -97,7 +97,7 @@ export function IfBlock({
             />
             {showLeftVariables && variables.length > 0 && !leftInputConnected && (
               <View style={styles.variablesDropdown}>
-                <ScrollView style={{ maxHeight: 150 }}>
+                <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                   {variables.map((name) => (
                     <TouchableOpacity
                       key={name}
@@ -118,7 +118,7 @@ export function IfBlock({
             </TouchableOpacity>
             {showOperators && (
               <View style={styles.operatorsDropdown}>
-                <ScrollView style={{ maxHeight: 150 }}>
+                <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                   {operators.map((op) => (
                     <TouchableOpacity key={op} style={styles.operatorOption} onPress={() => handleOperatorChange(op)}>
                       <Text>{op}</Text>
@@ -139,7 +139,7 @@ export function IfBlock({
             />
             {showRightVariables && variables.length > 0 && !rightInputConnected && (
               <View style={styles.variablesDropdown}>
-                <ScrollView style={{ maxHeight: 150 }}>
+                <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                   {variables.map((name) => (
                     <TouchableOpacity
                       key={name}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+const isPhone =( Platform.OS === "android" || Platform.OS === "ios")
 
 interface AssignmentBlockProps {
   variable: string
@@ -67,7 +68,7 @@ export function AssignmentBlock({
           </TouchableOpacity>
           {showVariables && variables.length > 0 && (
             <View style={styles.variablesDropdown}>
-              <ScrollView style={{ maxHeight: 150 }}>
+              <ScrollView style={{ maxHeight: isPhone ? undefined : 150 }}>
                 {variables.map((name) => (
                   <TouchableOpacity key={name} style={styles.variableOption} onPress={() => selectVariable(name)}>
                     <Text>{name}</Text>
