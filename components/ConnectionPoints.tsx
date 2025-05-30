@@ -56,8 +56,8 @@ export function ConnectionPoints({
 
   const isIfBlock = blockType === "if"
   const isWhileBlock = blockType === "while"
-  const isStartBlock = blockType === "start"
-  const isEndBlock = blockType === "end"
+  const isStartBlock = blockType === "start" || blockType === "functionStart"
+  const isEndBlock = blockType === "end" || blockType === "functionEnd"
   const isArithmeticBlock = blockType === "arithmetic"
   const isAssignmentBlock = blockType === "assignment"
   const isForBlock = blockType === "for"

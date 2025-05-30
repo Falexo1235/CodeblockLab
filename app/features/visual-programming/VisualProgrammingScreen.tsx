@@ -641,7 +641,8 @@ const VisualProgrammingScreen = () => {
                         activeConnectionPoint={sourceConnectionPoint}
                         placedBlocks={placedBlocks}
                         errors={errors} 
-                      />
+                        functions={[]}
+                        />
                     ))}
                   </Workspace>
 
@@ -685,7 +686,8 @@ const VisualProgrammingScreen = () => {
                       activeConnectionPoint={sourceConnectionPoint}
                       placedBlocks={placedBlocks}
                       errors={errors} 
-                    />
+                      functions={[]}
+                      />
                   ))}
                 </Workspace>
 

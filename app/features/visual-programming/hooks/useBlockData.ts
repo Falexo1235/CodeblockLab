@@ -74,6 +74,30 @@ const useBlockData = () => {
       color: '#795548', 
       type: 'output',
     },
+    {
+      id: "function-start",
+      category: "Мои блоки",
+      title: "Начало функции",
+      description: "Объявляет начало новой функции",
+      color: "#673AB7",
+      type: "functionStart",
+    },
+    {
+      id: "function-end",
+      category: "Мои блоки",
+      title: "Конец функции",
+      description: "Завершает объявление функции",
+      color: "#512DA8",
+      type: "functionEnd",
+    },
+    {
+      id: "function-call",
+      category: "Мои блоки",
+      title: "Вызов функции",
+      description: "Вызывает ранее объявленную функцию",
+      color: "#9C27B0",
+      type: "functionCall",
+    }
   ]
 
   return { blocks };

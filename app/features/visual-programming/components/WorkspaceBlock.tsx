@@ -3,6 +3,9 @@ import { AssignmentBlock } from '@/components/AssignmentBlock';
 import { ConnectionPoints } from '@/components/ConnectionPoints';
 import { EndBlock } from '@/components/EndBlock';
 import { ForBlock } from '@/components/ForBlock';
+import { FunctionCallBlock } from '@/components/FunctionCallBlock';
+import { FunctionEndBlock } from '@/components/FunctionEndBlock';
+import { FunctionStartBlock } from '@/components/FunctionStartBlock';
 import { IfBlock } from '@/components/IfBlock';
 import { OutputBlock } from '@/components/OutputBlock';
 import { StartBlock } from '@/components/StartBlock';
@@ -27,6 +30,7 @@ interface WorkspaceBlockProps {
   activeConnectionPoint?: ConnectionPoint | null
   placedBlocks: PlacedBlockType[]
   errors: { blockId: string; message: string }[] 
+  functions: string[]
 }
 
 export const WorkspaceBlock = ({
@@ -40,6 +44,7 @@ export const WorkspaceBlock = ({
   activeConnectionPoint,
   placedBlocks,
   errors,
+  functions,
 }: WorkspaceBlockProps) => {
   const offsetX = useSharedValue(block.x)
   const offsetY = useSharedValue(block.y)
@@ -162,6 +167,25 @@ export const WorkspaceBlock = ({
           <OutputBlock
             expression={block.data?.expression || ''}
             onExpressionChange={(expression: string) => onUpdateBlockData(block.instanceId, { expression })}
+            blockId={block.instanceId}
+          />
+        )
+      case 'functionStart':
+        return (
+          <FunctionStartBlock
+            functionName={block.data?.functionName || ''}
+            onFunctionNameChange={(name: string) => onUpdateBlockData(block.instanceId, { functionName: name })}
+            blockId={block.instanceId}
+          />
+        )
+      case 'functionEnd':
+        return <FunctionEndBlock blockId={block.instanceId} />
+      case 'functionCall':
+        return (
+          <FunctionCallBlock
+            functionName={block.data?.functionName || ''}
+            onFunctionNameChange={(name: string) => onUpdateBlockData(block.instanceId, { functionName: name })}
+            availableFunctions={functions}
             blockId={block.instanceId}
           />
         )

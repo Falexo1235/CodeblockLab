@@ -1,4 +1,4 @@
-import type { ExpressionResult, PlacedBlockType, VariableData } from "../types";
+import type { ExpressionResult, FunctionData, PlacedBlockType, VariableData } from "../types";
 
 export class Interpreter {
   private scopes: Array<Map<string, number>> = []; 
@@ -7,6 +7,9 @@ export class Interpreter {
   private blocks: PlacedBlockType[] = [];
   private maxIterations = 1000;
   private initializedForLoops: Set<string> = new Set();
+  private functions: Map<string, FunctionData> = new Map();
+  private maxCallStackDepth = 50;
+  private callStack: string[] = []
 
   constructor() {
     this.reset();
@@ -17,6 +20,8 @@ export class Interpreter {
     this.errors = [];
     this.outputMessages = []; 
     this.initializedForLoops.clear();
+    this.functions.clear()
+    this.callStack = []
   }
 
   private pushScope() {
@@ -73,12 +78,175 @@ export class Interpreter {
     return Array.from(allVariables.entries()).map(([name, value]) => ({ name, value }));
   }
 
+  getFunctions(): string[] {
+    return Array.from(this.functions.keys())
+  }
+
   getErrors() {
     return this.errors
   }
 
   getOutputMessages() { 
     return this.outputMessages;
+  }
+private discoverFunctions() {
+    const functionStarts = this.blocks.filter((block) => block.type === "functionStart")
+    for (const startBlock of functionStarts) {
+      const functionName = startBlock.data?.functionName?.trim()
+      if (!functionName) {
+        this.errors.push({
+          blockId: startBlock.instanceId,
+          message: "Имя функции не указано",
+        })
+        continue
+      }
+      const endBlock = this.findFunctionEnd(startBlock)
+      if (!endBlock) {
+        this.errors.push({
+          blockId: startBlock.instanceId,
+          message: `Не найден блок конца для функции '${functionName}'`,
+        })
+        continue
+      }
+      if (this.functions.has(functionName)) {
+        this.errors.push({
+          blockId: startBlock.instanceId,
+          message: `Функция '${functionName}' уже объявлена`,
+        })
+        continue
+      }
+      this.functions.set(functionName, {
+        name: functionName,
+        startBlockId: startBlock.instanceId,
+        endBlockId: endBlock.instanceId,
+      })
+    }
+  }
+  
+  private findFunctionEnd(startBlock: PlacedBlockType): PlacedBlockType | null {
+    let currentBlock = startBlock
+    const visited = new Set<string>()
+
+    while (currentBlock && !visited.has(currentBlock.instanceId)) {
+      visited.add(currentBlock.instanceId)
+      if (currentBlock.type === "functionEnd") {
+        return currentBlock
+      }
+      if (currentBlock.nextBlockId) {
+        const nextBlock = this.blocks.find((b) => b.instanceId === currentBlock.nextBlockId)
+        if (nextBlock) {
+          currentBlock = nextBlock
+        } else {
+          break
+        }
+      } else {
+        break
+      }
+    }
+    return null
+  }
+  
+  private executeFunction(functionName: string): void {
+    if (this.callStack.length >= this.maxCallStackDepth) {
+      throw new Error(
+        `Превышена максимальная глубина вызовов функций (${this.maxCallStackDepth}). Возможна бесконечная рекурсия.`,
+      )
+    }
+    if (this.callStack.includes(functionName)) {
+      throw new Error(`Обнаружена рекурсия в функции '${functionName}'`)
+    }
+    const functionData = this.functions.get(functionName)
+    if (!functionData) {
+      throw new Error(`Функция '${functionName}' не найдена`)
+    }
+    const startBlock = this.blocks.find((b) => b.instanceId === functionData.startBlockId)
+    if (!startBlock) {
+      throw new Error(`Не найден начальный блок функции '${functionName}'`)
+    }
+
+    this.callStack.push(functionName)
+    this.pushScope()
+
+    try {
+      if (startBlock.nextBlockId) {
+        const firstBlock = this.blocks.find((b) => b.instanceId === startBlock.nextBlockId)
+        if (firstBlock) {
+          this.executeFunctionBody(firstBlock, functionData.endBlockId)
+        }
+      }
+    } finally {
+      this.popScope()
+      this.callStack.pop()
+    }
+  }
+
+  private executeFunctionBody(currentBlock: PlacedBlockType, endBlockId: string): void {
+    if (currentBlock.instanceId === endBlockId) {
+      return
+    }
+
+    if (currentBlock.type === "functionEnd") {
+      return
+    }
+
+    try {
+      this.executeBlock(currentBlock)
+    } catch (error) {
+      if (!this.errors.some((e) => e.blockId === currentBlock.instanceId)) {
+        this.errors.push({ blockId: currentBlock.instanceId, message: (error as Error).message })
+      }
+      return
+    }
+
+    if (currentBlock.type === "if") {
+      let condition: boolean
+      try {
+        condition = this.evaluateCondition(currentBlock)
+      } catch (error) {
+        this.errors.push({ blockId: currentBlock.instanceId, message: (error as Error).message })
+        return
+      }
+
+      if (condition && currentBlock.trueBlockId) {
+        const nextBlock = this.blocks.find((b) => b.instanceId === currentBlock.trueBlockId)
+        if (nextBlock) {
+          this.executeFunctionBody(nextBlock, endBlockId)
+        }
+      } else if (!condition && currentBlock.falseBlockId) {
+        const nextBlock = this.blocks.find((b) => b.instanceId === currentBlock.falseBlockId)
+        if (nextBlock) {
+          this.executeFunctionBody(nextBlock, endBlockId)
+        }
+      }
+    }
+    else if (currentBlock.type === "while") {
+      let condition: boolean
+      try {
+        condition = this.evaluateCondition(currentBlock)
+      } catch (error) {
+        this.errors.push({ blockId: currentBlock.instanceId, message: (error as Error).message })
+        return
+      }
+
+      if (condition && currentBlock.trueBlockId) {
+        const bodyBlock = this.blocks.find((b) => b.instanceId === currentBlock.trueBlockId)
+        if (bodyBlock) {
+          this.executeFunctionBody(bodyBlock, endBlockId)
+          this.executeFunctionBody(currentBlock, endBlockId) // Повторяем цикл
+        }
+      } else if (!condition && currentBlock.falseBlockId) {
+        const nextBlock = this.blocks.find((b) => b.instanceId === currentBlock.falseBlockId)
+        if (nextBlock) {
+          this.executeFunctionBody(nextBlock, endBlockId)
+        }
+      }
+    }
+    else if (currentBlock.nextBlockId) {
+      const nextBlock = this.blocks.find((b) => b.instanceId === currentBlock.nextBlockId)
+      if (nextBlock) {
+        this.executeFunctionBody(nextBlock, endBlockId)
+      }
+    }
   }
 
   execute(blocks: PlacedBlockType[]): {
@@ -89,6 +257,7 @@ export class Interpreter {
   } {
     this.reset()
     this.blocks = blocks
+    this.discoverFunctions()
 
     const startBlock = blocks.find((block) => block.type === "start")
     if (!startBlock) {
@@ -121,6 +290,16 @@ export class Interpreter {
         blockId: currentBlock.instanceId,
         message: `Превышено максимальное количество итераций (${this.maxIterations}). Возможно, бесконечный цикл.`,
       })
+      return
+    }
+
+    if (currentBlock.type === "functionStart" || currentBlock.type === "functionEnd") {
+      if (currentBlock.nextBlockId) {
+        const nextBlock = this.blocks.find((block) => block.instanceId === currentBlock.nextBlockId)
+        if (nextBlock) {
+          this.executeBlockChain(nextBlock, iterationCount)
+        }
+      }
       return
     }
 
@@ -336,6 +515,9 @@ export class Interpreter {
         case "output":
           this.executeOutputBlock(block);
           break
+        case "functionCall":
+          this.executeFunctionCallBlock(block)
+          break
         case "if":
         case "while":
         case "for": 
@@ -343,6 +525,8 @@ export class Interpreter {
         case "start":
         case "end":
           break
+        case "functionStart":
+        case "functionEnd":
         default:
           throw new Error(`Неизвестный тип блока: ${block.type}`)
       }
@@ -351,7 +535,14 @@ export class Interpreter {
       throw error 
     }
   }
+  private executeFunctionCallBlock(block: PlacedBlockType) {
+    const functionName = block.data?.functionName?.trim()
+    if (!functionName) {
+      throw new Error("Имя функции для вызова не указано")
+    }
 
+    this.executeFunction(functionName)
+  }
   private executeVariableBlock(block: PlacedBlockType) {
     const variableNameInput = block.data?.variableName || ""
 
