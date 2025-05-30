@@ -11,13 +11,34 @@ interface ConnectionLineProps {
 }
 
 export function ConnectionLine({ startX, startY, endX, endY, color = "#2A2A2A", isTrue }: ConnectionLineProps) {
+  if (!isFinite(startX) || !isFinite(startY) || !isFinite(endX) || !isFinite(endY)) {
+    return null;
+  }
 
-  const midY = startY + (endY - startY) / 2
-  const path = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`
+  const maxSize = 5000;
+  if (Math.abs(startX) > maxSize || Math.abs(startY) > maxSize || 
+      Math.abs(endX) > maxSize || Math.abs(endY) > maxSize) {
+    return null;
+  }
+
+  const minX = Math.min(startX, endX) - 10;
+  const minY = Math.min(startY, endY) - 10;
+  const maxX = Math.max(startX, endX) + 10;
+  const maxY = Math.max(startY, endY) + 10;
+  
+  const width = maxX - minX;
+  const height = maxY - minY;
+
+  if (width <= 0 || height <= 0 || width > 2000 || height > 2000) {
+    return null;
+  }
+
+  const midY = startY + (endY - startY) / 2;
+  const path = `M ${startX - minX} ${startY - minY} C ${startX - minX} ${midY - minY}, ${endX - minX} ${midY - minY}, ${endX - minX} ${endY - minY}`;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Svg width="100%" height="100%">
+    <View style={[StyleSheet.absoluteFill, { left: minX, top: minY, width, height }]} pointerEvents="none">
+      <Svg width={width} height={height}>
         <Path
           d={path}
           stroke={isTrue === true ? "#4CAF50" : isTrue === false ? "#F44336" : color}
