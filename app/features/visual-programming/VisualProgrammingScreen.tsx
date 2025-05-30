@@ -99,6 +99,13 @@ const VisualProgrammingScreen = () => {
   }
 
   const addBlockToWorkspace = (block: BlockType, x: number, y: number) => {
+    if (block.type === "start") {
+      const startBlockExists = placedBlocks.find((PlacedBlock) => PlacedBlock.type === "start")
+      if (startBlockExists) {
+        Alert.alert("Ограничение", 'На рабочей области может быть только один блок "Старт"', [{ text: "OK" }])
+        return
+      }
+    } 
     const newBlock: PlacedBlockType = {
       ...block,
       instanceId: `${block.id}-${Date.now()}`,

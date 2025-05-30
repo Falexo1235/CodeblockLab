@@ -44,7 +44,7 @@ export const Workspace = ({
         }
       }
 
-      if ((block.type === 'if' || block.type === 'while') && block.trueBlockId) {
+      if ((block.type === 'if' || block.type === 'while' || block.type === 'for') && block.trueBlockId) {
         const trueBlock = placedBlocks.find((b) => b.instanceId === block.trueBlockId)
         if (trueBlock) {
           lines.push(
@@ -60,7 +60,7 @@ export const Workspace = ({
         }
       }
 
-      if ((block.type === 'if' || block.type === 'while') && block.falseBlockId) {
+      if ((block.type === 'if' || block.type === 'while' || block.type === 'for') && block.falseBlockId) {
         const falseBlock = placedBlocks.find((b) => b.instanceId === block.falseBlockId)
         if (falseBlock) {
           lines.push(
