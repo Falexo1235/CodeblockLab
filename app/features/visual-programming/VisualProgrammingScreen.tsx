@@ -1,6 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BlocksArea } from './components/BlocksArea';
 import { CategorySidebar } from './components/CategorySidebar';
 import { Header } from './components/Header';
@@ -13,6 +14,8 @@ import { Interpreter } from './interpreter/interpreter';
 import { styles } from './styles';
 import { BlockType, ConnectionPoint, PlacedBlockType, VariableData } from './types';
 
+const WORKSPACE_STORAGE_KEY = 'visual_programming_workspace';
+
 const VisualProgrammingScreen = () => {
   const [activeView, setActiveView] = useState<'blocks' | 'workspace'>('blocks');
   const [selectedTab, setSelectedTab] = useState<string>('Code');
@@ -22,6 +25,7 @@ const VisualProgrammingScreen = () => {
   const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
   const [variables, setVariables] = useState<VariableData[]>([]);
   const [errors, setErrors] = useState<{ blockId: string; message: string }[]>([]);
+  const [output, setOutput] = useState<{ blockId: string; message: string }[]>([]);
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [sourceConnectionPoint, setSourceConnectionPoint] = useState<ConnectionPoint | null>(null);
@@ -34,6 +38,44 @@ const VisualProgrammingScreen = () => {
 
   const isPortrait = windowDimensions.height > windowDimensions.width;
   
+  useEffect(() => {
+    const loadWorkspace = async () => {
+      try {
+        const savedWorkspaceJson = await AsyncStorage.getItem(WORKSPACE_STORAGE_KEY);
+        if (savedWorkspaceJson !== null) {
+          const savedBlocks = JSON.parse(savedWorkspaceJson) as PlacedBlockType[];
+          if (Array.isArray(savedBlocks)) {
+             setPlacedBlocks(savedBlocks);
+          }
+        } else {
+          
+          
+        }
+      } catch (e) {
+        console.error("Failed to load workspace from storage", e);
+        Alert.alert("Ошибка загрузки", "Не удалось загрузить сохраненную рабочую область.");
+      }
+    };
+    loadWorkspace();
+  }, []);
+
+  useEffect(() => {
+    const saveWorkspace = async () => {
+      if (placedBlocks === undefined) return;
+      try {
+        const jsonValue = JSON.stringify(placedBlocks);
+        await AsyncStorage.setItem(WORKSPACE_STORAGE_KEY, jsonValue);
+      } catch (e) {
+        console.error("Failed to save workspace to storage", e);
+        
+        
+      }
+    };
+    if(placedBlocks.length > 0 || AsyncStorage.getItem(WORKSPACE_STORAGE_KEY) !== null ){
+        saveWorkspace();
+    }
+  }, [placedBlocks]);
+
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setWindowDimensions(window)
@@ -80,6 +122,8 @@ const VisualProgrammingScreen = () => {
         condition: '',
         operator: '==',
         expression: '',
+        initialization: '',
+        iteration: '',
       },
     };
     
@@ -114,6 +158,7 @@ const VisualProgrammingScreen = () => {
     setPlacedBlocks([])
     setVariables([])
     setErrors([])
+    setOutput([]);
   }
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible)
@@ -460,10 +505,12 @@ const VisualProgrammingScreen = () => {
     }
 
     setErrors([])
+    setOutput([]);
 
     const result = interpreter.current.execute(placedBlocks)
     setVariables(result.variables)
     setErrors(result.errors)
+    setOutput(result.output);
 
     if (result.errors.length > 0) {
       Alert.alert('Ошибки выполнения', `Найдено ${result.errors.length} ошибок`)
@@ -482,30 +529,42 @@ const VisualProgrammingScreen = () => {
     return (
       <View style={styles.runView}>
         <Text style={styles.runViewTitle}>Результаты выполнения</Text>
-
-        {errors.length > 0 && (
-          <View style={styles.errorsContainer}>
-            <Text style={styles.errorsTitle}>Ошибки:</Text>
-            {errors.map((error, index) => (
-              <Text key={index} style={styles.errorText}>
-                • {error.message}
-              </Text>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.variablesContainer}>
-          <Text style={styles.variablesTitle}>Переменные:</Text>
-          {variables.length > 0 ? (
-            variables.map((variable, index) => (
-              <Text key={index} style={styles.variableText}>
-                {variable.name} = {variable.value}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.noVariablesText}>Нет переменных</Text>
+        <ScrollView>
+          {output.length > 0 && (
+            <View style={styles.outputContainer}>
+              <Text style={styles.outputTitle}>Вывод:</Text>
+              {output.map((item, index) => (
+                <Text key={index} style={styles.outputText}>
+                  • {item.message}
+                </Text>
+              ))}
+            </View>
           )}
-        </View>
+
+          {errors.length > 0 && (
+            <View style={styles.errorsContainer}>
+              <Text style={styles.errorsTitle}>Ошибки:</Text>
+              {errors.map((error, index) => (
+                <Text key={index} style={styles.errorText}>
+                  • {error.message}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.variablesContainer}>
+            <Text style={styles.variablesTitle}>Переменные:</Text>
+            {variables.length > 0 ? (
+              variables.map((variable, index) => (
+                <Text key={index} style={styles.variableText}>
+                  {variable.name} = {variable.value}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.noVariablesText}>Нет переменных</Text>
+            )}
+          </View>
+        </ScrollView>
       </View>
     )
   }
