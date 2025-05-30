@@ -33,6 +33,7 @@ export function VariableBlock({ name, onNameChange }: VariableBlockProps) {
             value={variableName}
             onChangeText={handleNameChange}
             placeholder="Введите имена переменных"
+            autoCapitalize="none"
           />
         </View>
       </View>

@@ -63,4 +63,6 @@ export const PlacedBlock = ({
       </Animated.View>
     </PanGestureHandler>
   );
-}; 
+};
+
+export default PlacedBlock; 
