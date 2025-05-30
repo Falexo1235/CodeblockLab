@@ -15,6 +15,7 @@ import { styles } from './styles';
 import { BlockType, ConnectionPoint, PlacedBlockType, VariableData } from './types';
 
 const WORKSPACE_STORAGE_KEY = 'visual_programming_workspace';
+const WORKSPACE_OFFSET_STORAGE_KEY = 'visual_programming_workspace_offset';
 
 const VisualProgrammingScreen = () => {
   const [activeView, setActiveView] = useState<'blocks' | 'workspace'>('blocks');
@@ -26,6 +27,7 @@ const VisualProgrammingScreen = () => {
   const [variables, setVariables] = useState<VariableData[]>([]);
   const [errors, setErrors] = useState<{ blockId: string; message: string }[]>([]);
   const [output, setOutput] = useState<{ blockId: string; message: string }[]>([]);
+  const [workspaceOffset, setWorkspaceOffset] = useState({ x: 0, y: 0 });
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [sourceConnectionPoint, setSourceConnectionPoint] = useState<ConnectionPoint | null>(null);
@@ -47,9 +49,12 @@ const VisualProgrammingScreen = () => {
           if (Array.isArray(savedBlocks)) {
              setPlacedBlocks(savedBlocks);
           }
-        } else {
-          
-          
+        }
+
+        const savedOffsetJson = await AsyncStorage.getItem(WORKSPACE_OFFSET_STORAGE_KEY)
+        if (savedOffsetJson !== null) {
+          const savedOffset = JSON.parse(savedOffsetJson)
+          setWorkspaceOffset(savedOffset)
         }
       } catch (e) {
         console.error("Failed to load workspace from storage", e);
@@ -70,11 +75,23 @@ const VisualProgrammingScreen = () => {
         
         
       }
-    };
-    if(placedBlocks.length > 0 || AsyncStorage.getItem(WORKSPACE_STORAGE_KEY) !== null ){
-        saveWorkspace();
     }
-  }, [placedBlocks]);
+    if (placedBlocks.length > 0 || AsyncStorage.getItem(WORKSPACE_STORAGE_KEY) !== null) {
+      saveWorkspace()
+    }
+  }, [placedBlocks])
+
+  useEffect(() => {
+    const saveWorkspaceOffset = async () => {
+      try {
+        const jsonValue = JSON.stringify(workspaceOffset)
+        await AsyncStorage.setItem(WORKSPACE_OFFSET_STORAGE_KEY, jsonValue)
+      } catch (e) {
+        console.error("Failed to save workspace offset to storage", e)
+      }
+    }
+    saveWorkspaceOffset()
+  }, [workspaceOffset])
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -98,6 +115,8 @@ const VisualProgrammingScreen = () => {
     }
   }
 
+  const centerWorkspace = () => {
+  }
   const addBlockToWorkspace = (block: BlockType, x: number, y: number) => {
     if (block.type === "start") {
       const startBlockExists = placedBlocks.find((PlacedBlock) => PlacedBlock.type === "start")
@@ -106,11 +125,14 @@ const VisualProgrammingScreen = () => {
         return
       }
     } 
+    const adjustedX = x - workspaceOffset.x
+    const adjustedY = y - workspaceOffset.y
+
     const newBlock: PlacedBlockType = {
       ...block,
       instanceId: `${block.id}-${Date.now()}`,
-      x,
-      y,
+      x: adjustedX,
+      y: adjustedY,
       nextBlockId: null,
       trueBlockId: null,
       falseBlockId: null,
@@ -131,6 +153,7 @@ const VisualProgrammingScreen = () => {
         expression: '',
         initialization: '',
         iteration: '',
+        functionName: '',
       },
     };
     
@@ -532,6 +555,13 @@ const VisualProgrammingScreen = () => {
     return variables.map((v) => v.name)
   }
 
+  const getFunctionNames = () => {
+    return placedBlocks
+      .filter((block) => block.type === "functionStart" && block.data?.functionName)
+      .map((block) => block.data!.functionName!)
+      .filter((name) => name.trim() !== "")
+  }
+
   const renderRunView = () => {
     return (
       <View style={styles.runView}>
@@ -587,12 +617,10 @@ const VisualProgrammingScreen = () => {
       <Header />
       
       <MainTabs selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-      
-      {isPortrait && (
-        <MobileTabs activeView={activeView} setActiveView={setActiveView} />
-      )}
 
-      {selectedTab === 'Code' ? (
+      {isPortrait && <MobileTabs activeView={activeView} setActiveView={setActiveView} />}
+
+      {selectedTab === "Code" ? (
         <View style={styles.contentContainer}>
           {(!isPortrait || activeView === 'blocks') && (
             <CategorySidebar
@@ -626,8 +654,10 @@ const VisualProgrammingScreen = () => {
                     workspaceRef={workspaceRef}
                     onWorkspaceLayout={onWorkspaceLayout}
                     onBlockDrop={handleBlockDrop}
+                    workspaceOffset={workspaceOffset}
+                    onWorkspaceOffsetChange={setWorkspaceOffset}
+                    onCenterWorkspace={centerWorkspace}
                   >
-                    {}
                     {placedBlocks.map((block) => (
                       <WorkspaceBlock
                         key={block.instanceId}
@@ -640,9 +670,9 @@ const VisualProgrammingScreen = () => {
                         isConnecting={isConnecting}
                         activeConnectionPoint={sourceConnectionPoint}
                         placedBlocks={placedBlocks}
-                        errors={errors} 
-                        functions={[]}
-                        />
+                        errors={errors}
+                        functions={getFunctionNames()}
+                      />
                     ))}
                   </Workspace>
 
@@ -672,6 +702,9 @@ const VisualProgrammingScreen = () => {
                   workspaceRef={workspaceRef}
                   onWorkspaceLayout={onWorkspaceLayout}
                   onBlockDrop={handleBlockDrop}
+                  workspaceOffset={workspaceOffset}
+                  onWorkspaceOffsetChange={setWorkspaceOffset}
+                  onCenterWorkspace={centerWorkspace}
                 >
                   {placedBlocks.map((block) => (
                     <WorkspaceBlock
@@ -685,9 +718,9 @@ const VisualProgrammingScreen = () => {
                       isConnecting={isConnecting}
                       activeConnectionPoint={sourceConnectionPoint}
                       placedBlocks={placedBlocks}
-                      errors={errors} 
-                      functions={[]}
-                      />
+                      errors={errors}
+                      functions={getFunctionNames()}
+                    />
                   ))}
                 </Workspace>
 

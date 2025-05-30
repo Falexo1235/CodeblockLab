@@ -193,23 +193,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
-  workspaceScrollView: {
-    flex: 1,
-  },
-  workspaceScrollContent: {
-    minWidth: 4000,
-    minHeight: 4000,
-  },
-  workspace: {
+  workspaceContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    overflow: 'hidden',
+  },
+  workspace: {
+    backgroundColor: '#FAFAFA',
+    position: 'absolute',
+    width: '400%',
+    height: '400%',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
-    position: 'relative',
-    minHeight: 4000,
-    width: 4000,
   },
   workspaceBlockContainer: {
     width: 300,
@@ -234,10 +233,6 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     textAlign: 'center',
     width: 200,
-  },
-  workspaceContainer: {
-    flex: 2,
-    position: 'relative',
   },
   runButton: {
     position: 'absolute',
@@ -352,7 +347,27 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     lineHeight: 20,
   },
-});
+  centerButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#2A2A2A',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    zIndex: 100,
+  },
+  centerButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+})
 
 export { styles };
 export default styles; 

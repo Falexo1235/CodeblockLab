@@ -1,8 +1,53 @@
 import { ConnectionLine } from '@/components/ConnectionLine';
-import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { styles } from '../styles';
 import { PlacedBlockType } from '../types';
+
+const WorkspaceGrid = () => {
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 0,
+      }}
+    >
+      {Array.from({ length: 100 }).map((_, i) => (
+        <View
+          key={`h-${i}`}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: i * 40,
+            height: 1,
+            backgroundColor: "#E0E0E0",
+          }}
+        />
+      ))}
+      {Array.from({ length: 100 }).map((_, i) => (
+        <View
+          key={`v-${i}`}
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: i * 40,
+            width: 1,
+            backgroundColor: "#E0E0E0",
+          }}
+        />
+      ))}
+    </View>
+  )
+}
 
 interface WorkspaceProps {
   placedBlocks: PlacedBlockType[];
@@ -12,6 +57,9 @@ interface WorkspaceProps {
   onWorkspaceLayout: (event: any) => void;
   onBlockDrop: (x: number, y: number, block: any) => void;
   children?: React.ReactNode;
+  workspaceOffset: { x: number; y: number };
+  onWorkspaceOffsetChange: (offset: { x: number; y: number }) => void;
+  onCenterWorkspace: () => void;
 }
 
 export const Workspace = ({ 
@@ -22,7 +70,92 @@ export const Workspace = ({
   onWorkspaceLayout,
   onBlockDrop,
   children,
+  workspaceOffset,
+  onWorkspaceOffsetChange,
+  onCenterWorkspace,
 }: WorkspaceProps) => {
+  const offsetX = useSharedValue(workspaceOffset.x)
+  const offsetY = useSharedValue(workspaceOffset.y)
+  const isDragging = useRef(false)
+  const containerSize = useRef({ width: 0, height: 0 })
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  const getCenteredOffset = () => {
+    if (containerSize.current.width === 0 || containerSize.current.height === 0) {
+      return { x: 0, y: 0 }
+    }
+
+    const centerX = -containerSize.current.width * 1.5
+    const centerY = -containerSize.current.height * 1.5
+
+    return { x: centerX, y: centerY }
+  }
+
+  useEffect(() => {
+    offsetX.value = workspaceOffset.x
+    offsetY.value = workspaceOffset.y
+  }, [workspaceOffset.x, workspaceOffset.y])
+
+  useEffect(() => {
+    if (!isInitialized && containerSize.current.width > 0 && containerSize.current.height > 0) {
+      const centeredOffset = getCenteredOffset()
+      onWorkspaceOffsetChange(centeredOffset)
+      setIsInitialized(true)
+    }
+  }, [containerSize.current.width, containerSize.current.height, isInitialized])
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.oldState === State.ACTIVE) {
+      isDragging.current = false
+      onWorkspaceOffsetChange({
+        x: offsetX.value,
+        y: offsetY.value,
+      })
+    }
+  }
+
+  const onGestureEvent = (event: any) => {
+    if (!isDragging.current) {
+      isDragging.current = true
+    }
+
+    const newOffsetX = workspaceOffset.x + event.nativeEvent.translationX
+    const newOffsetY = workspaceOffset.y + event.nativeEvent.translationY
+
+    const workspaceWidth = containerSize.current.width * 4 
+    const workspaceHeight = containerSize.current.height * 4
+
+    const minVisiblePart = 100
+    const maxOffsetX = containerSize.current.width - minVisiblePart
+    const maxOffsetY = containerSize.current.height - minVisiblePart
+    const minOffsetX = -(workspaceWidth - containerSize.current.width) - minVisiblePart
+    const minOffsetY = -(workspaceHeight - containerSize.current.height) - minVisiblePart
+
+    offsetX.value = Math.min(Math.max(newOffsetX, minOffsetX), maxOffsetX)
+    offsetY.value = Math.min(Math.max(newOffsetY, minOffsetY), maxOffsetY)
+  }
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: offsetX.value }, { translateY: offsetY.value }],
+    }
+  })
+
+  const handleContainerLayout = (event: any) => {
+    const { width, height } = event.nativeEvent.layout
+    containerSize.current = { width, height }
+    onWorkspaceLayout(event)
+  }
+
+  const handleCenterWorkspace = () => {
+    const centeredOffset = getCenteredOffset()
+
+    offsetX.value = withSpring(centeredOffset.x)
+    offsetY.value = withSpring(centeredOffset.y)
+
+    onCenterWorkspace()
+    onWorkspaceOffsetChange(centeredOffset)
+  }
 
   const renderConnectionLines = () => {
     const lines = []
@@ -132,38 +265,46 @@ export const Workspace = ({
 
   return (
     <View 
-      style={styles.workspaceArea}
-      ref={workspaceRef}
-      onLayout={onWorkspaceLayout}
+      style={styles.workspaceArea} 
+      ref={workspaceRef} 
+      onLayout={handleContainerLayout}
     >
       <View style={styles.workspaceHeader}>
         <Text style={styles.workspaceTitle}>Рабочая область</Text>
-        {placedBlocks.length > 0 && (
-          <TouchableOpacity 
-            style={styles.clearButton}
-            onPress={onClearWorkspace}
-          >
-            <Text style={styles.clearButtonText}>Очистить все</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      <ScrollView>
-      <ScrollView
-        style={styles.workspaceScrollView}
-        contentContainerStyle={styles.workspaceScrollContent}
-        horizontal={true}
-      >
-        <View style={styles.workspace}>
-          {renderConnectionLines()}
-          {children}
-          {placedBlocks.length === 0 && (
-            <Text style={styles.emptyWorkspaceText}>Перетащите блоки сюда, чтобы создать программу</Text>
+        <View style={{ flexDirection: "row" }}>
+          {placedBlocks.length > 0 && (
+            <TouchableOpacity style={styles.clearButton} onPress={onClearWorkspace}>
+              <Text style={styles.clearButtonText}>Очистить все</Text>
+            </TouchableOpacity>
           )}
         </View>
-      </ScrollView>
-      </ScrollView>
+      </View>
+
+      <View style={styles.workspaceContainer}>
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          minPointers={1}
+          maxPointers={1}
+        >
+          <Animated.View style={[styles.workspace, animatedStyle]}>
+            <WorkspaceGrid />
+            {renderConnectionLines()}
+            {children}
+            {placedBlocks.length === 0 && (
+              <Text style={styles.emptyWorkspaceText}>
+                Перетащите блоки сюда, чтобы создать программу
+              </Text>
+            )}
+          </Animated.View>
+        </PanGestureHandler>
+
+        <TouchableOpacity style={styles.centerButton} onPress={handleCenterWorkspace}>
+          <Ionicons name="locate-outline" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
-export default Workspace; 
+export default Workspace;
