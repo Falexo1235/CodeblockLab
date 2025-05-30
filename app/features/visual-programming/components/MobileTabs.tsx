@@ -56,4 +56,6 @@ export const MobileTabs = ({ activeView, setActiveView }: MobileTabsProps) => {
       </TouchableOpacity>
     </View>
   );
-}; 
+};
+
+export default MobileTabs; 

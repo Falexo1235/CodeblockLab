@@ -39,4 +39,6 @@ export const MainTabs = ({ selectedTab, setSelectedTab }: MainTabsProps) => {
       />
     </View>
   );
-}; 
+};
+
+export default MainTabs; 
