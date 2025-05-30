@@ -1,6 +1,6 @@
 import { BlockType } from '../types';
 
-export const useBlockData = () => {
+const useBlockData = () => {
   const blocks: BlockType[] = [
     {
       id: 'start-block',
@@ -58,7 +58,26 @@ export const useBlockData = () => {
       color: '#FF5722',
       type: 'while',
     },
+    {
+      id: 'for-loop',
+      category: 'Управление',
+      title: 'Цикл FOR',
+      description: 'Повторяет блок кода (инициализация; условие; шаг)',
+      color: '#00BCD4',
+      type: 'for',
+    },
+    {
+      id: 'output-block',
+      category: 'Операторы',
+      title: 'Вывод',
+      description: 'Выводит значение выражения или переменную',
+      color: '#795548', 
+      type: 'output',
+    },
   ]
 
   return { blocks };
-}; 
+};
+
+export { useBlockData };
+export default useBlockData; 

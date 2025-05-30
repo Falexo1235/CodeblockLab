@@ -4,7 +4,7 @@ export type BlockType = {
   title: string;
   description: string;
   color: string;
-  type?: 'variable' | 'assignment' | 'arithmetic' | 'if' | 'while' | 'start' | 'end';
+  type?: 'variable' | 'assignment' | 'arithmetic' | 'if' | 'while' | 'start' | 'end' | 'for' | 'output';
 };
 
 export type PlacedBlockType = BlockType & {
@@ -17,9 +17,7 @@ export type PlacedBlockType = BlockType & {
   previousBlockId?: string | null
 
   inputConnections?: {
-
     valueInputId?: string | null
-
     leftInputId?: string | null
     rightInputId?: string | null
   }
@@ -31,8 +29,9 @@ export type PlacedBlockType = BlockType & {
     operation?: string
     condition?: string
     operator?: string
-
     expression?: string
+    initialization?: string
+    iteration?: string
   }
 }
 
@@ -48,7 +47,6 @@ export type ConnectionPoint = {
   width: number
   height: number
   blockId: string
-
   inputField?: 'value' | 'left' | 'right'
 }
 
@@ -56,3 +54,13 @@ export type ExpressionResult = {
   value: number
   error?: string
 }
+
+const Types = {
+  BlockType: {} as BlockType,
+  PlacedBlockType: {} as PlacedBlockType,
+  VariableData: {} as VariableData,
+  ConnectionPoint: {} as ConnectionPoint,
+  ExpressionResult: {} as ExpressionResult,
+};
+
+export default Types;
