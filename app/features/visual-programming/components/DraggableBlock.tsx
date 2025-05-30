@@ -2,10 +2,10 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from 'react-native-reanimated';
 import { styles } from '../styles';
 import { BlockType } from '../types';
@@ -124,4 +124,6 @@ export const DraggableBlock = ({
       </Animated.View>
     </PanGestureHandler>
   );
-}; 
+};
+
+export default DraggableBlock; 

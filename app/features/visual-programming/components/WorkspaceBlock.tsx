@@ -2,7 +2,9 @@ import { ArithmeticBlock } from '@/components/ArithmeticBlock';
 import { AssignmentBlock } from '@/components/AssignmentBlock';
 import { ConnectionPoints } from '@/components/ConnectionPoints';
 import { EndBlock } from '@/components/EndBlock';
+import { ForBlock } from '@/components/ForBlock';
 import { IfBlock } from '@/components/IfBlock';
+import { OutputBlock } from '@/components/OutputBlock';
 import { StartBlock } from '@/components/StartBlock';
 import { VariableBlock } from '@/components/VariableBlock';
 import { WhileBlock } from '@/components/WhileBlock';
@@ -71,11 +73,11 @@ export const WorkspaceBlock = ({
     block.inputConnections?.valueInputId !== undefined &&
     block.inputConnections?.valueInputId !== null
   const hasLeftInputConnection =
-    (block.type === 'if' || block.type === 'while') &&
+    (block.type === 'if' || block.type === 'while' || block.type === 'for') &&
     block.inputConnections?.leftInputId !== undefined &&
     block.inputConnections?.leftInputId !== null
   const hasRightInputConnection =
-    (block.type === 'if' || block.type === 'while') &&
+    (block.type === 'if' || block.type === 'while' || block.type === 'for') &&
     block.inputConnections?.rightInputId !== undefined &&
     block.inputConnections?.rightInputId !== null
 
@@ -138,6 +140,31 @@ export const WorkspaceBlock = ({
             rightInputConnected={hasRightInputConnection}
           />
         )
+      case 'for':
+        return (
+          <ForBlock
+            initialization={block.data?.initialization || ''}
+            condition={block.data?.condition || ''}
+            operator={block.data?.operator || '=='}
+            iteration={block.data?.iteration || ''}
+            onInitializationChange={(initialization: string) => onUpdateBlockData(block.instanceId, { initialization })}
+            onConditionChange={(condition: string) => onUpdateBlockData(block.instanceId, { condition })}
+            onOperatorChange={(operator: string) => onUpdateBlockData(block.instanceId, { operator })}
+            onIterationChange={(iteration: string) => onUpdateBlockData(block.instanceId, { iteration })}
+            variables={variables}
+            blockId={block.instanceId}
+            leftInputConnected={hasLeftInputConnection}
+            rightInputConnected={hasRightInputConnection}
+          />
+        )
+      case 'output':
+        return (
+          <OutputBlock
+            expression={block.data?.expression || ''}
+            onExpressionChange={(expression: string) => onUpdateBlockData(block.instanceId, { expression })}
+            blockId={block.instanceId}
+          />
+        )
       default:
         return null
     }
@@ -166,9 +193,9 @@ export const WorkspaceBlock = ({
           hasTrueConnection={!!block.trueBlockId}
           hasFalseConnection={!!block.falseBlockId}
           hasOutputConnection={block.type === 'arithmetic'}
-          hasValueInputConnection={block.type === 'assignment'}
-          hasLeftInputConnection={block.type === 'if' || block.type === 'while'}
-          hasRightInputConnection={block.type === 'if' || block.type === 'while'}
+          hasValueInputConnection={block.type === 'assignment' || block.type === 'output'}
+          hasLeftInputConnection={block.type === 'if' || block.type === 'while' || block.type === 'for'}
+          hasRightInputConnection={block.type === 'if' || block.type === 'while' || block.type === 'for'}
           valueInputConnected={hasValueInputConnection}
           leftInputConnected={hasLeftInputConnection}
           rightInputConnected={hasRightInputConnection}
@@ -181,3 +208,5 @@ export const WorkspaceBlock = ({
     </PanGestureHandler>
   )
 }
+
+export default WorkspaceBlock;

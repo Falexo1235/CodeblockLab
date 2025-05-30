@@ -130,26 +130,6 @@ export const Workspace = ({
     return lines
   }
 
-  const handleDragOver = (e: any) => {
-    e.preventDefault()
-  }
-
-  const handleDrop = (e: any) => {
-    e.preventDefault()
-
-    if (workspaceRef.current) {
-      workspaceRef.current.measure((x, y, width, height, pageX, pageY) => {
-        const dropX = e.nativeEvent.pageX - pageX
-        const dropY = e.nativeEvent.pageY - pageY
-
-        if (e.nativeEvent.dataTransfer && e.nativeEvent.dataTransfer.getData('block')) {
-          const blockData = JSON.parse(e.nativeEvent.dataTransfer.getData('block'))
-          onBlockDrop(dropX, dropY, blockData)
-        }
-      })
-    }
-  }
-
   return (
     <View 
       style={styles.workspaceArea}
@@ -171,8 +151,6 @@ export const Workspace = ({
       <ScrollView
         style={styles.workspaceScrollView}
         contentContainerStyle={styles.workspaceScrollContent}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
         horizontal={true}
       >
         <View style={styles.workspace}>
@@ -186,4 +164,6 @@ export const Workspace = ({
       </ScrollView>
     </View>
   );
-}; 
+};
+
+export default Workspace; 
