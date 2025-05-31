@@ -15,8 +15,6 @@ export const Header = () => {
         <Text style={styles.logoText}>CODEBLOCK</Text>
       </View>
       <View style={styles.menuContainer}>
-        <MenuItem title="Файл" />
-        <MenuItem title="Правка" />
       </View>
     </View>
   );
