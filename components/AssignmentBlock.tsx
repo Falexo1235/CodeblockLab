@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#2196F3",
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 0,
     overflow: "visible",
     position: "relative",
     zIndex: 1,

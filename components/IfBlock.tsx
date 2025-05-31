@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#9C27B0",
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 0,
     overflow: "visible",
     position: "relative",
     zIndex: 1,
