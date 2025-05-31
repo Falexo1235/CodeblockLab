@@ -20,6 +20,7 @@ const CategoryButton = ({
     'Управление': 'git-branch-outline',
     'Переменные': 'cube-outline',
     'Операторы': 'calculator-outline',
+    'Массивы': 'grid-outline',
     'Мои блоки': 'bookmark-outline',
   };
 
@@ -64,8 +65,8 @@ export const CategorySidebar = ({
   isSidebarVisible,
   toggleSidebar
 }: CategorySidebarProps) => {
-  const categories = ['Управление', 'Переменные', 'Операторы', 'Мои блоки'];
-  
+  const categories = ['Управление', 'Переменные', 'Операторы', 'Массивы', 'Мои блоки']
+
   return (
     <View style={[
       styles.sidebar, 

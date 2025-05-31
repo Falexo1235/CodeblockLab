@@ -1,4 +1,7 @@
 import { ArithmeticBlock } from '@/components/ArithmeticBlock';
+import { ArrayAssignmentBlock } from '@/components/ArrayAssignmentBlock';
+import { ArrayDeclarationBlock } from '@/components/ArrayDeclarationBlock';
+import { ArrayElementBlock } from '@/components/ArrayElementBlock';
 import { AssignmentBlock } from '@/components/AssignmentBlock';
 import { ConnectionPoints } from '@/components/ConnectionPoints';
 import { EndBlock } from '@/components/EndBlock';
@@ -31,6 +34,7 @@ interface WorkspaceBlockProps {
   placedBlocks: PlacedBlockType[]
   errors: { blockId: string; message: string }[] 
   functions: string[]
+  arrays: string[]
 }
 
 export const WorkspaceBlock = ({
@@ -45,6 +49,7 @@ export const WorkspaceBlock = ({
   placedBlocks,
   errors,
   functions,
+  arrays,
 }: WorkspaceBlockProps) => {
   const offsetX = useSharedValue(block.x)
   const offsetY = useSharedValue(block.y)
@@ -74,7 +79,7 @@ export const WorkspaceBlock = ({
   })
 
   const hasValueInputConnection =
-    block.type === 'assignment' &&
+    (block.type === 'assignment' || block.type === 'output' || block.type === 'arrayAssignment') &&
     block.inputConnections?.valueInputId !== undefined &&
     block.inputConnections?.valueInputId !== null
   const hasLeftInputConnection =
@@ -85,6 +90,11 @@ export const WorkspaceBlock = ({
     (block.type === 'if' || block.type === 'while' || block.type === 'for') &&
     block.inputConnections?.rightInputId !== undefined &&
     block.inputConnections?.rightInputId !== null
+
+  const hasIndexInputConnection =
+    (block.type === 'arrayAssignment' || block.type === 'arrayElement') &&
+    block.inputConnections?.indexInputId !== undefined &&
+    block.inputConnections?.indexInputId !== null
 
   const renderBlockContent = () => {
     switch (block.type) {
@@ -189,6 +199,43 @@ export const WorkspaceBlock = ({
             blockId={block.instanceId}
           />
         )
+      case 'arrayDeclaration':
+        return (
+          <ArrayDeclarationBlock
+            arrayName={block.data?.arrayName || ''}
+            arraySize={block.data?.arraySize || ''}
+            onArrayNameChange={(name) => onUpdateBlockData(block.instanceId, { arrayName: name })}
+            onArraySizeChange={(size) => onUpdateBlockData(block.instanceId, { arraySize: size })}
+            blockId={block.instanceId}
+          />
+        )
+      case 'arrayAssignment':
+        return (
+          <ArrayAssignmentBlock
+            arrayName={block.data?.arrayName || ''}
+            arrayIndex={block.data?.arrayIndex || ''}
+            value={block.data?.value || ''}
+            onArrayNameChange={(name) => onUpdateBlockData(block.instanceId, { arrayName: name })}
+            onArrayIndexChange={(index) => onUpdateBlockData(block.instanceId, { arrayIndex: index })}
+            onValueChange={(value) => onUpdateBlockData(block.instanceId, { value })}
+            arrays={arrays}
+            blockId={block.instanceId}
+            indexInputConnected={hasIndexInputConnection}
+            valueInputConnected={hasValueInputConnection}
+          />
+        )
+      case 'arrayElement':
+        return (
+          <ArrayElementBlock
+            arrayName={block.data?.arrayName || ''}
+            arrayIndex={block.data?.arrayIndex || ''}
+            onArrayNameChange={(name) => onUpdateBlockData(block.instanceId, { arrayName: name })}
+            onArrayIndexChange={(index) => onUpdateBlockData(block.instanceId, { arrayIndex: index })}
+            arrays={arrays}
+            blockId={block.instanceId}
+            indexInputConnected={hasIndexInputConnection}
+          />
+        )
       default:
         return null
     }
@@ -216,13 +263,17 @@ export const WorkspaceBlock = ({
           hasBottomConnection={!!block.nextBlockId}
           hasTrueConnection={!!block.trueBlockId}
           hasFalseConnection={!!block.falseBlockId}
-          hasOutputConnection={block.type === 'arithmetic'}
-          hasValueInputConnection={block.type === 'assignment' || block.type === 'output'}
+          hasOutputConnection={block.type === 'arithmetic' || block.type === 'arrayElement'}
+          hasValueInputConnection={
+            block.type === 'assignment' || block.type === 'output' || block.type === 'arrayAssignment'
+          }
           hasLeftInputConnection={block.type === 'if' || block.type === 'while' || block.type === 'for'}
           hasRightInputConnection={block.type === 'if' || block.type === 'while' || block.type === 'for'}
+          hasIndexInputConnection={block.type === 'arrayAssignment' || block.type === 'arrayElement'}
           valueInputConnected={hasValueInputConnection}
           leftInputConnected={hasLeftInputConnection}
           rightInputConnected={hasRightInputConnection}
+          indexInputConnected={hasIndexInputConnection}
         />
 
         <TouchableOpacity style={styles.deleteBlockButton} onPress={() => onDeleteBlock(block.instanceId)}>

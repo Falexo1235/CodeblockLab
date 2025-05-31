@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Dimensions, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { BlocksArea } from './components/BlocksArea';
 import { CategorySidebar } from './components/CategorySidebar';
@@ -12,7 +11,7 @@ import { WorkspaceBlock } from './components/WorkspaceBlock';
 import { useBlockData } from './hooks/useBlockData';
 import { Interpreter } from './interpreter/interpreter';
 import { styles } from './styles';
-import { BlockType, ConnectionPoint, PlacedBlockType, VariableData } from './types';
+import type { ArrayData, BlockType, ConnectionPoint, PlacedBlockType, VariableData } from './types';
 
 const WORKSPACE_STORAGE_KEY = 'visual_programming_workspace';
 const WORKSPACE_OFFSET_STORAGE_KEY = 'visual_programming_workspace_offset';
@@ -28,6 +27,7 @@ const VisualProgrammingScreen = () => {
   const [errors, setErrors] = useState<{ blockId: string; message: string }[]>([]);
   const [output, setOutput] = useState<{ blockId: string; message: string }[]>([]);
   const [workspaceOffset, setWorkspaceOffset] = useState({ x: 0, y: 0 });
+  const [arrays, setArrays] = useState<ArrayData[]>([]);
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [sourceConnectionPoint, setSourceConnectionPoint] = useState<ConnectionPoint | null>(null);
@@ -141,6 +141,7 @@ const VisualProgrammingScreen = () => {
         valueInputId: null,
         leftInputId: null,
         rightInputId: null,
+        indexInputId: null,
       },
       data: {
         variableName: '',
@@ -154,6 +155,9 @@ const VisualProgrammingScreen = () => {
         initialization: '',
         iteration: '',
         functionName: '',
+        arrayName: '',
+        arraySize: '',
+        arrayIndex: '',
       },
     };
     
@@ -187,6 +191,7 @@ const VisualProgrammingScreen = () => {
   const clearWorkspace = () => {
     setPlacedBlocks([])
     setVariables([])
+    setArrays([])
     setErrors([])
     setOutput([]);
   }
@@ -224,8 +229,10 @@ const VisualProgrammingScreen = () => {
 
           removeInputConnection(point)
           return
-        } else if (point.type === 'rightInput' && block.inputConnections?.rightInputId) {
-
+        } else if (point.type === "rightInput" && block.inputConnections?.rightInputId) {
+          removeInputConnection(point)
+          return
+        } else if (point.type === "indexInput" && block.inputConnections?.indexInputId) {
           removeInputConnection(point)
           return
         }
@@ -238,12 +245,16 @@ const VisualProgrammingScreen = () => {
       if (sourceConnectionPoint && sourceConnectionPoint.blockId !== point.blockId) {
 
         if (
-          (sourceConnectionPoint.type === 'output' &&
-            (point.type === 'valueInput' || point.type === 'leftInput' || point.type === 'rightInput')) ||
-          (point.type === 'output' &&
-            (sourceConnectionPoint.type === 'valueInput' ||
-              sourceConnectionPoint.type === 'leftInput' ||
-              sourceConnectionPoint.type === 'rightInput'))
+          (sourceConnectionPoint.type === "output" &&
+            (point.type === "valueInput" ||
+              point.type === "leftInput" ||
+              point.type === "rightInput" ||
+              point.type === "indexInput")) ||
+          (point.type === "output" &&
+            (sourceConnectionPoint.type === "valueInput" ||
+              sourceConnectionPoint.type === "leftInput" ||
+              sourceConnectionPoint.type === "rightInput" ||
+              sourceConnectionPoint.type === "indexInput"))
         ) {
 
           connectInputs(sourceConnectionPoint, point)
@@ -287,6 +298,11 @@ const VisualProgrammingScreen = () => {
         updatedBlocks[blockIndex] = {
           ...block,
           inputConnections: { ...block.inputConnections, rightInputId: null },
+        }
+      } else if (connectionType === "indexInput") {
+        updatedBlocks[blockIndex] = {
+          ...block,
+          inputConnections: { ...block.inputConnections, indexInputId: null },
         }
       }
 
@@ -362,47 +378,70 @@ const VisualProgrammingScreen = () => {
   }
 
   const connectInputs = (source: ConnectionPoint, target: ConnectionPoint) => {
-
-    let arithmeticBlockId: string
+    let outputBlockId: string
     let targetBlockId: string
-    let inputType: 'valueInput' | 'leftInput' | 'rightInput'
+    let inputType: 'valueInput' | 'leftInput' | 'rightInput' | 'indexInput'
 
     if (source.type === 'output') {
-      arithmeticBlockId = source.blockId
+      outputBlockId = source.blockId
       targetBlockId = target.blockId
-      inputType = target.type as 'valueInput' | 'leftInput' | 'rightInput'
+      inputType = target.type as 'valueInput' | 'leftInput' | 'rightInput' | 'indexInput'
     } else {
-      arithmeticBlockId = target.blockId
+      outputBlockId = target.blockId
       targetBlockId = source.blockId
-      inputType = source.type as 'valueInput' | 'leftInput' | 'rightInput'
+      inputType = source.type as 'valueInput' | 'leftInput' | 'rightInput' | 'indexInput'
     }
 
-    const arithmeticBlock = placedBlocks.find((b) => b.instanceId === arithmeticBlockId)
+    const outputBlock = placedBlocks.find((b) => b.instanceId === outputBlockId)
     const targetBlock = placedBlocks.find((b) => b.instanceId === targetBlockId)
 
-    if (!arithmeticBlock || arithmeticBlock.type !== 'arithmetic' || !targetBlock) {
-      Alert.alert('Ошибка соединения', 'Неверный тип блока для соединения')
+    if (
+      !outputBlock ||
+      (outputBlock.type !== "arithmetic" && outputBlock.type !== "arrayElement") ||
+      !targetBlock
+    ) {
+      Alert.alert("Ошибка соединения", "Неверный тип блока для соединения")
+      return
+    }
+
+    const validConnections = {
+      assignment: ["valueInput"],
+      output: ["valueInput"],
+      if: ["leftInput", "rightInput"],
+      while: ["leftInput", "rightInput"],
+      for: ["leftInput", "rightInput"],
+      arrayAssignment: ["valueInput", "indexInput"],
+      arrayElement: ["indexInput"]
+    }
+
+    const targetType = targetBlock.type as keyof typeof validConnections
+    if (validConnections[targetType] && !validConnections[targetType].includes(inputType)) {
+      Alert.alert("Ошибка соединения", `Блок ${targetBlock.title} не поддерживает этот тип входа`)
       return
     }
 
     setPlacedBlocks((prev) =>
       prev.map((block) => {
         if (block.instanceId === targetBlockId) {
-
-          if (inputType === 'valueInput') {
+          if (inputType === "valueInput") {
             return {
               ...block,
-              inputConnections: { ...block.inputConnections, valueInputId: arithmeticBlockId },
+              inputConnections: { ...block.inputConnections, valueInputId: outputBlockId },
             }
-          } else if (inputType === 'leftInput') {
+          } else if (inputType === "leftInput") {
             return {
               ...block,
-              inputConnections: { ...block.inputConnections, leftInputId: arithmeticBlockId },
+              inputConnections: { ...block.inputConnections, leftInputId: outputBlockId },
             }
-          } else if (inputType === 'rightInput') {
+          } else if (inputType === "rightInput") {
             return {
               ...block,
-              inputConnections: { ...block.inputConnections, rightInputId: arithmeticBlockId },
+              inputConnections: { ...block.inputConnections, rightInputId: outputBlockId },
+            }
+          } else if (inputType === "indexInput") {
+            return {
+              ...block,
+              inputConnections: { ...block.inputConnections, indexInputId: outputBlockId },
             }
           }
         }
@@ -412,7 +451,6 @@ const VisualProgrammingScreen = () => {
   }
 
   const deleteBlock = (instanceId: string) => {
-
     const blockToDelete = placedBlocks.find((block) => block.instanceId === instanceId)
     if (!blockToDelete) return
 
@@ -447,6 +485,9 @@ const VisualProgrammingScreen = () => {
           if (block.inputConnections.rightInputId === instanceId) {
             inputUpdates.rightInputId = null
           }
+          if (block.inputConnections.indexInputId === instanceId) {
+            inputUpdates.indexInputId = null
+          }
 
           if (Object.keys(inputUpdates).length > 0) {
             updates.inputConnections = { ...block.inputConnections, ...inputUpdates }
@@ -479,27 +520,32 @@ const VisualProgrammingScreen = () => {
       toBlock = targetBlock
       fromType = source.type
       toType = target.type
-
-      if (targetBlock.previousBlockId) {
-        Alert.alert('Ошибка соединения', 'Блок уже имеет входящее соединение')
-        return
-      }
-    }
-
-    else if (source.type === 'top' && (target.type === 'bottom' || target.type === 'true' || target.type === 'false')) {
+    } else if (
+      source.type === "top" &&
+      (target.type === "bottom" || target.type === "true" || target.type === "false")
+    ) {
       fromBlock = targetBlock
       toBlock = sourceBlock
       fromType = target.type
       toType = source.type
-
-      if (sourceBlock.previousBlockId) {
-        Alert.alert('Ошибка соединения', 'Блок уже имеет входящее соединение')
-        return
-      }
+    } else {
+      Alert.alert("Ошибка соединения", "Недопустимый тип соединения. Соединяйте выход одного блока со входом другого.")
+      return
     }
 
-    else {
-      Alert.alert('Ошибка соединения', 'Недопустимый тип соединения. Соединяйте выход одного блока со входом другого.')
+    if (toBlock.previousBlockId) {
+      Alert.alert("Ошибка соединения", "Блок уже имеет входящее соединение")
+      return
+    }
+
+    if (fromType === "bottom" && fromBlock.nextBlockId) {
+      Alert.alert("Ошибка соединения", "Блок уже имеет исходящее соединение")
+      return
+    } else if (fromType === "true" && fromBlock.trueBlockId) {
+      Alert.alert("Ошибка соединения", "Блок уже имеет соединение для 'true'")
+      return
+    } else if (fromType === "false" && fromBlock.falseBlockId) {
+      Alert.alert("Ошибка соединения", "Блок уже имеет соединение для 'false'")
       return
     }
 
@@ -539,6 +585,7 @@ const VisualProgrammingScreen = () => {
 
     const result = interpreter.current.execute(placedBlocks)
     setVariables(result.variables)
+    setArrays(result.arrays)
     setErrors(result.errors)
     setOutput(result.output);
 
@@ -560,6 +607,10 @@ const VisualProgrammingScreen = () => {
       .filter((block) => block.type === "functionStart" && block.data?.functionName)
       .map((block) => block.data!.functionName!)
       .filter((name) => name.trim() !== "")
+  }
+
+  const getArrayNames = () => {
+    return arrays.map((arr) => arr.name)
   }
 
   const renderRunView = () => {
@@ -601,6 +652,17 @@ const VisualProgrammingScreen = () => {
               <Text style={styles.noVariablesText}>Нет переменных</Text>
             )}
           </View>
+
+          {arrays.length > 0 && (
+            <View style={styles.variablesContainer}>
+              <Text style={styles.variablesTitle}>Массивы:</Text>
+              {arrays.map((array, index) => (
+                <Text key={index} style={styles.variableText}>
+                  {array.name}[{array.size}] = [{array.elements.join(", ")}]
+                </Text>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </View>
     )
@@ -612,7 +674,6 @@ const VisualProgrammingScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
       
       <Header />
       
@@ -672,6 +733,7 @@ const VisualProgrammingScreen = () => {
                         placedBlocks={placedBlocks}
                         errors={errors}
                         functions={getFunctionNames()}
+                        arrays={getArrayNames()}
                       />
                     ))}
                   </Workspace>
@@ -720,6 +782,7 @@ const VisualProgrammingScreen = () => {
                       placedBlocks={placedBlocks}
                       errors={errors}
                       functions={getFunctionNames()}
+                      arrays={getArrayNames()}
                     />
                   ))}
                 </Workspace>

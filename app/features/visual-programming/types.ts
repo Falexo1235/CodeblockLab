@@ -1,23 +1,26 @@
 export type BlockType = {
   id: string;
-  category: 'Переменные' | 'Управление' | 'Операторы' | 'Мои блоки';
+  category: 'Переменные' | 'Управление' | 'Операторы' | 'Мои блоки' | 'Массивы';
   title: string;
   description: string;
   color: string;
-  type?: 
-  'variable' 
-  | 'assignment' 
-  | 'arithmetic' 
-  | 'if' 
-  | 'while' 
-  | 'start' 
-  | 'end' 
-  | 'for' 
-  | 'output' 
-  | 'functionStart'
-  | 'functionCall'
-  | 'functionEnd';
-};
+  type?:
+    | 'variable'
+    | 'assignment'
+    | 'arithmetic'
+    | 'if'
+    | 'while'
+    | 'start'
+    | 'end'
+    | 'for'
+    | 'output'
+    | 'functionStart'
+    | 'functionCall'
+    | 'functionEnd'
+    | 'arrayDeclaration'
+    | 'arrayAssignment'
+    | 'arrayElement';
+}
 
 export type PlacedBlockType = BlockType & {
   instanceId: string
@@ -32,6 +35,7 @@ export type PlacedBlockType = BlockType & {
     valueInputId?: string | null
     leftInputId?: string | null
     rightInputId?: string | null
+    indexInputId?: string | null
   }
   data?: {
     variableName?: string
@@ -45,12 +49,21 @@ export type PlacedBlockType = BlockType & {
     initialization?: string
     iteration?: string
     functionName?: string
+    arrayName?: string
+    arraySize?: string
+    arrayIndex?: string
   }
 }
 
 export type VariableData = {
   name: string
   value: number
+}
+
+export type ArrayData = {
+  name: string
+  size: number
+  elements: number[]
 }
 
 export type FunctionData = {
@@ -60,13 +73,13 @@ export type FunctionData = {
 }
 
 export type ConnectionPoint = {
-  type: 'top' | 'bottom' | 'true' | 'false' | 'output' | 'valueInput' | 'leftInput' | 'rightInput'
+  type: 'top' | 'bottom' | 'true' | 'false' | 'output' | 'valueInput' | 'leftInput' | 'rightInput' | 'indexInput'
   x: number
   y: number
   width: number
   height: number
   blockId: string
-  inputField?: 'value' | 'left' | 'right'
+  inputField?: 'value' | 'left' | 'right' | 'index'
 }
 
 export type ExpressionResult = {
@@ -78,6 +91,7 @@ const Types = {
   BlockType: {} as BlockType,
   PlacedBlockType: {} as PlacedBlockType,
   VariableData: {} as VariableData,
+  ArrayData: {} as ArrayData,
   ConnectionPoint: {} as ConnectionPoint,
   ExpressionResult: {} as ExpressionResult,
   FunctionData: {} as FunctionData,

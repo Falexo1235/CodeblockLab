@@ -209,25 +209,32 @@ export const Workspace = ({
         }
       }
 
-      if (block.type === 'arithmetic') {
-
+      if (block.type === 'arithmetic' || block.type === 'arrayElement') {
         const connectedBlocks = placedBlocks.filter(
           (b) =>
             b.inputConnections?.valueInputId === block.instanceId ||
             b.inputConnections?.leftInputId === block.instanceId ||
-            b.inputConnections?.rightInputId === block.instanceId,
+            b.inputConnections?.rightInputId === block.instanceId ||
+            b.inputConnections?.indexInputId === block.instanceId,
         )
 
         for (const connectedBlock of connectedBlocks) {
           if (connectedBlock.inputConnections?.valueInputId === block.instanceId) {
+            let endX = connectedBlock.x + 300
+            let endY = connectedBlock.y + 60
+            
+            if (connectedBlock.type === 'output') {
+              endX = connectedBlock.x
+              endY = connectedBlock.y + 30
+            }
 
             lines.push(
               <ConnectionLine
                 key={`${block.instanceId}-value-${connectedBlock.instanceId}`}
                 startX={block.x + 300}
                 startY={block.y + 30}
-                endX={connectedBlock.x + 300}
-                endY={connectedBlock.y + 60}
+                endX={endX}
+                endY={endY}
                 color='#FF9800'
               />,
             )
@@ -253,6 +260,17 @@ export const Workspace = ({
                 endX={connectedBlock.x + 300}
                 endY={connectedBlock.y + 40}
                 color='#FF9800'
+              />,
+            )
+          } else if (connectedBlock.inputConnections?.indexInputId === block.instanceId) {
+            lines.push(
+              <ConnectionLine
+                key={`${block.instanceId}-index-${connectedBlock.instanceId}`}
+                startX={block.x + 300}
+                startY={block.y + 30}
+                endX={connectedBlock.x}
+                endY={connectedBlock.y + 60}
+                color='#9C27B0'
               />,
             )
           }

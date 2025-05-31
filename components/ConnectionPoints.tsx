@@ -16,9 +16,11 @@ interface ConnectionPointsProps {
   hasValueInputConnection?: boolean
   hasLeftInputConnection?: boolean
   hasRightInputConnection?: boolean
+  hasIndexInputConnection?: boolean
   valueInputConnected?: boolean
   leftInputConnected?: boolean
   rightInputConnected?: boolean
+  indexInputConnected?: boolean
 }
 
 export function ConnectionPoints({
@@ -35,13 +37,15 @@ export function ConnectionPoints({
   hasValueInputConnection = false,
   hasLeftInputConnection = false,
   hasRightInputConnection = false,
+  hasIndexInputConnection = false,
   valueInputConnected = false,
   leftInputConnected = false,
   rightInputConnected = false,
+  indexInputConnected = false,
 }: ConnectionPointsProps) {
   const handlePress = (
-    type: "top" | "bottom" | "true" | "false" | "output" | "valueInput" | "leftInput" | "rightInput",
-    inputField?: "value" | "left" | "right",
+    type: "top" | "bottom" | "true" | "false" | "output" | "valueInput" | "leftInput" | "rightInput" | "indexInput",
+    inputField?: "value" | "left" | "right" | "index",
   ) => {
     onConnectionPointPress({
       type,
@@ -62,9 +66,12 @@ export function ConnectionPoints({
   const isAssignmentBlock = blockType === "assignment"
   const isForBlock = blockType === "for"
   const isOutputBlock = blockType === "output"
+  const isArrayDeclarationBlock = blockType === "arrayDeclaration"
+  const isArrayAssignmentBlock = blockType === "arrayAssignment"
+  const isArrayElementBlock = blockType === "arrayElement"
 
   const isActivePoint = (
-    type: "top" | "bottom" | "true" | "false" | "output" | "valueInput" | "leftInput" | "rightInput",
+    type: "top" | "bottom" | "true" | "false" | "output" | "valueInput" | "leftInput" | "rightInput" | "indexInput",
   ) => {
     return (
       isConnecting &&
@@ -76,7 +83,7 @@ export function ConnectionPoints({
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {!isStartBlock && !isArithmeticBlock && (
+      {!isStartBlock && !isArithmeticBlock && !isArrayElementBlock && (
         <TouchableOpacity
           style={[
             styles.topPoint,
@@ -87,16 +94,24 @@ export function ConnectionPoints({
         />
       )}
 
-      {!isEndBlock && !isIfBlock && !isWhileBlock && !isForBlock && !isArithmeticBlock && !isOutputBlock && (
-        <TouchableOpacity
-          style={[
-            styles.bottomPoint,
-            isActivePoint("bottom") && styles.activePoint,
-            hasBottomConnection && styles.connectedPoint,
-          ]}
-          onPress={() => handlePress("bottom")}
-        />
-      )}
+      {!isEndBlock &&
+        !isIfBlock &&
+        !isWhileBlock &&
+        !isForBlock &&
+        !isArithmeticBlock &&
+        !isOutputBlock &&
+        !isArrayElementBlock &&
+        !isArrayDeclarationBlock &&
+        !isArrayAssignmentBlock && (
+          <TouchableOpacity
+            style={[
+              styles.bottomPoint,
+              isActivePoint("bottom") && styles.activePoint,
+              hasBottomConnection && styles.connectedPoint,
+            ]}
+            onPress={() => handlePress("bottom")}
+          />
+        )}
 
       {(isIfBlock || isWhileBlock || isForBlock) && (
         <>
@@ -136,9 +151,13 @@ export function ConnectionPoints({
         </>
       )}
 
-      {isArithmeticBlock && (
+      {(isArithmeticBlock || isArrayElementBlock) && (
         <TouchableOpacity
-          style={[styles.outputPoint, isActivePoint("output") && styles.activePoint]}
+          style={[
+            styles.outputPoint,
+            isActivePoint("output") && styles.activePoint,
+            hasOutputConnection && styles.connectedPoint,
+          ]}
           onPress={() => handlePress("output")}
         />
       )}
@@ -165,16 +184,66 @@ export function ConnectionPoints({
         </>
       )}
 
-      {}
       {isAssignmentBlock && (
-         <TouchableOpacity
+        <TouchableOpacity
+          style={[
+            styles.valueInputPoint,
+            isActivePoint("valueInput") && styles.activePoint,
+            valueInputConnected && styles.connectedInputPoint,
+          ]}
+          onPress={() => handlePress("valueInput", "value")}
+        />
+      )}
+
+      {isArrayAssignmentBlock && (
+        <>
+          <TouchableOpacity
             style={[
-              styles.valueInputPoint, 
+              styles.bottomPoint,
+              isActivePoint("bottom") && styles.activePoint,
+              hasBottomConnection && styles.connectedPoint,
+            ]}
+            onPress={() => handlePress("bottom")}
+          />
+          <TouchableOpacity
+            style={[
+              styles.indexInputPoint,
+              isActivePoint("indexInput") && styles.activePoint,
+              indexInputConnected && styles.connectedInputPoint,
+            ]}
+            onPress={() => handlePress("indexInput", "index")}
+          />
+          <TouchableOpacity
+            style={[
+              styles.valueInputPoint,
               isActivePoint("valueInput") && styles.activePoint,
               valueInputConnected && styles.connectedInputPoint,
             ]}
             onPress={() => handlePress("valueInput", "value")}
           />
+        </>
+      )}
+
+      {isArrayElementBlock && (
+        <TouchableOpacity
+          style={[
+            styles.indexInputPoint,
+            isActivePoint("indexInput") && styles.activePoint,
+            indexInputConnected && styles.connectedInputPoint,
+          ]}
+          onPress={() => handlePress("indexInput", "index")}
+        />
+      )}
+
+      {isArrayDeclarationBlock && (
+        <TouchableOpacity
+          style={[
+            styles.bottomPoint,
+            isActivePoint("bottom") && styles.activePoint,
+            hasBottomConnection && styles.connectedPoint,
+          ]}
+          onPress={() => handlePress("bottom")}
+        />
       )}
     </View>
   )
@@ -267,6 +336,16 @@ const styles = StyleSheet.create({
     width: 10,
     height: 20,
     backgroundColor: "rgba(0, 0, 255, 0.3)",
+    borderRadius: 5,
+  },
+  indexInputPoint: {
+    position: "absolute",
+    left: -10,
+    top: "60%",
+    marginTop: -10,
+    width: 10,
+    height: 20,
+    backgroundColor: "rgba(128, 0, 128, 0.6)",
     borderRadius: 5,
   },
   outputValueInputPoint: {
